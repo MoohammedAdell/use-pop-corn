@@ -50,21 +50,30 @@ const tempWatchedData = [
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
 const KEY = "b3e6ac73";
+const querys = "interstellar";
 export default function App() {
   const [query, setQuery] = useState("");
   const [movies, setMovies] = useState([]);
   const [watched, setWatched] = useState([]);
   const [isOpen1, setIsOpen1] = useState(true);
   const [isOpen2, setIsOpen2] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const avgImdbRating = average(watched.map((movie) => movie.imdbRating));
   const avgUserRating = average(watched.map((movie) => movie.userRating));
   const avgRuntime = average(watched.map((movie) => movie.runtime));
 
   useEffect(() => {
-    fetch(`http://www.omdbapi.com/?apikey=${KEY}&s=interstellar`)
-      .then((res) => res.json())
-      .then((data) => setMovies(data.Search));
+    async function fetchMovies() {
+      setIsLoading(true);
+      const res = await fetch(
+        `http://www.omdbapi.com/?apikey=${KEY}&s=${querys}`
+      );
+      const data = await res.json();
+      setMovies(data.Search);
+      setIsLoading(false);
+    }
+    fetchMovies();
   }, []);
   return (
     <>
@@ -95,18 +104,22 @@ export default function App() {
           </button>
           {isOpen1 && (
             <ul className="list">
-              {movies?.map((movie) => (
-                <li key={movie.imdbID}>
-                  <img src={movie.Poster} alt={`${movie.Title} poster`} />
-                  <h3>{movie.Title}</h3>
-                  <div>
-                    <p>
-                      <span>🗓</span>
-                      <span>{movie.Year}</span>
-                    </p>
-                  </div>
-                </li>
-              ))}
+              {isLoading ? (
+                <Loading />
+              ) : (
+                movies?.map((movie) => (
+                  <li key={movie.imdbID}>
+                    <img src={movie.Poster} alt={`${movie.Title} poster`} />
+                    <h3>{movie.Title}</h3>
+                    <div>
+                      <p>
+                        <span>🗓</span>
+                        <span>{movie.Year}</span>
+                      </p>
+                    </div>
+                  </li>
+                ))
+              )}
             </ul>
           )}
         </div>
@@ -171,3 +184,11 @@ export default function App() {
     </>
   );
 }
+const loadingStyle = {
+  color: "red ",
+  fontSize: "30px",
+  padding: "20px 0 0 20px",
+};
+const Loading = () => {
+  return <p style={loadingStyle}>Loading...</p>;
+};
